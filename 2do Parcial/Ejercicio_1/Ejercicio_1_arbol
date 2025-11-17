@@ -1,0 +1,130 @@
+from tree import BinaryTree
+def in_order_proximity(root, search_value):
+    if root is not None:
+        in_order_proximity(root.left, search_value)
+        
+        if search_value.lower() in root.value.lower():
+            print(root.value, root.other_values)
+
+        in_order_proximity(root.right, search_value)
+
+def in_order_weakness(root, weak_to_types):
+    if root is not None:
+        in_order_weakness(root.left, weak_to_types)
+        
+        pokemon_data = root.other_values
+        is_weak = False
+        for debilidad in pokemon_data['debilidad']:
+            if debilidad in weak_to_types:
+                is_weak = True
+                break
+        
+        if is_weak:
+            print(root.value, "(Débil a:", pokemon_data['debilidad'], ")")
+
+        in_order_weakness(root.right, weak_to_types)
+
+def in_order_type_count(root):
+    if root is not None:
+        in_order_type_count(root.left)
+        
+        tipo = root.value
+        cantidad = len(root.other_values['pokemons'])
+        print("- Tipo:", tipo, "| Cantidad:", cantidad)
+        
+        in_order_type_count(root.right)
+
+def count_special_forms(root):
+    if root is None:
+        return (0, 0)
+    
+    left_mega, left_giga = count_special_forms(root.left)
+    right_mega, right_giga = count_special_forms(root.right)
+    
+    current_mega = 1 if root.other_values['mega'] else 0
+    current_giga = 1 if root.other_values['gigamax'] else 0
+    
+    total_mega = left_mega + right_mega + current_mega
+    total_giga = left_giga + right_giga + current_giga
+    
+    return (total_mega, total_giga)
+
+
+# 1. Crear los tres árboles
+arbol_nombre = BinaryTree()
+arbol_numero = BinaryTree()
+arbol_tipo = BinaryTree()
+
+# Datos de 10 Pokémon (9 generaciones)
+datos_pokemon = [
+    {'nombre': 'Bulbasaur', 'numero': 1, 'tipo': ['Planta', 'Veneno'], 'debilidad': ['Fuego', 'Hielo', 'Volador', 'Psíquico'], 'mega': False, 'gigamax': True},
+    {'nombre': 'Charizard', 'numero': 6, 'tipo': ['Fuego', 'Volador'], 'debilidad': ['Agua', 'Eléctrico', 'Roca'], 'mega': True, 'gigamax': True},
+    {'nombre': 'Pikachu', 'numero': 25, 'tipo': ['Eléctrico'], 'debilidad': ['Tierra'], 'mega': False, 'gigamax': True},
+    {'nombre': 'Steelix', 'numero': 208, 'tipo': ['Acero', 'Tierra'], 'debilidad': ['Fuego', 'Agua', 'Lucha', 'Tierra'], 'mega': True, 'gigamax': False},
+    {'nombre': 'Gardevoir', 'numero': 282, 'tipo': ['Psíquico', 'Hada'], 'debilidad': ['Veneno', 'Fantasma', 'Acero'], 'mega': True, 'gigamax': False},
+    {'nombre': 'Gengar', 'numero': 94, 'tipo': ['Fantasma', 'Veneno'], 'debilidad': ['Fantasma', 'Siniestro', 'Psíquico', 'Tierra'], 'mega': True, 'gigamax': True},
+    {'nombre': 'Lycanroc', 'numero': 745, 'tipo': ['Roca'], 'debilidad': ['Agua', 'Planta', 'Lucha', 'Tierra', 'Acero'], 'mega': False, 'gigamax': False},
+    {'nombre': 'Corviknight', 'numero': 823, 'tipo': ['Volador', 'Acero'], 'debilidad': ['Fuego', 'Eléctrico'], 'mega': False, 'gigamax': True},
+    {'nombre': 'Tyrantrum', 'numero': 697, 'tipo': ['Roca', 'Dragón'], 'debilidad': ['Hielo', 'Lucha', 'Tierra', 'Acero', 'Dragón', 'Hada'], 'mega': False, 'gigamax': False},
+    {'nombre': 'Flutter Mane', 'numero': 987, 'tipo': ['Fantasma', 'Hada'], 'debilidad': ['Fantasma', 'Acero'], 'mega': False, 'gigamax': False}
+]
+
+for pokemon in datos_pokemon:
+    arbol_nombre.insert(pokemon['nombre'], pokemon)
+    arbol_numero.insert(pokemon['numero'], pokemon)
+    
+    for tipo in pokemon['tipo']:
+        nodo_tipo = arbol_tipo.search(tipo)
+        if nodo_tipo is None:
+            arbol_tipo.insert(tipo, {'pokemons': [pokemon['nombre']]})
+        else:
+            nodo_tipo.other_values['pokemons'].append(pokemon['nombre'])
+
+print("--- Árboles cargados ---")
+
+# 2. Mostrar datos por número (exacto) y nombre (proximidad)
+print("--- 2. Búsqueda por Número (25) ---")
+nodo_buscado = arbol_numero.search(25)
+if nodo_buscado:
+    print(nodo_buscado.value, nodo_buscado.other_values)
+else:
+    print("No se encontró el Pokémon.")
+
+print("--- 2. Búsqueda por Proximidad (nombre 'Saur') ---")
+in_order_proximity(arbol_nombre.root, "Saur")
+
+# 3. Mostrar Pokémon por tipo
+print("--- 3. Pokémon por tipo ---")
+tipos_buscados = ['Fantasma', 'Fuego', 'Acero', 'Eléctrico']
+for tipo in tipos_buscados:
+    print("Tipo:", tipo)
+    nodo_tipo = arbol_tipo.search(tipo)
+    if nodo_tipo:
+        print(nodo_tipo.other_values['pokemons'])
+    else:
+        print("No se encontraron Pokémon de este tipo.")
+
+# 4. Listados (ascendente por número, nombre y por nivel)
+print("--- 4. Listado Ascendente por Número ---")
+arbol_numero.in_order()
+
+print("--- 4. Listado Ascendente por Nombre ---")
+arbol_nombre.in_order()
+
+print("--- 4. Listado por Nivel (Árbol de Nombre) ---")
+arbol_nombre.by_level()
+
+# 5. Mostrar débiles a Jolteon, Lycanroc, Tyrantrum
+print("--- 5. Pokémon débiles a (Eléctrico, Roca, Dragón) ---")
+tipos_ataque = ['Eléctrico', 'Roca', 'Dragón']
+in_order_weakness(arbol_nombre.root, tipos_ataque)
+
+# 6. Mostrar tipos y cuántos hay de cada uno
+print("--- 6. Conteo total de Pokémon por tipo ---")
+in_order_type_count(arbol_tipo.root)
+
+# 7. y 8. Contar Pokémon con Megaevolución y Gigamax
+print("--- 7 y 8. Conteo de Megaevolución y Gigamax ---")
+total_mega, total_giga = count_special_forms(arbol_nombre.root)
+print("Total de Pokémon con Megaevolución:", total_mega)
+print("Total de Pokémon con forma Gigamax:", total_giga)
